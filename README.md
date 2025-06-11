@@ -1,2 +1,2 @@
 # Weather-App
-A dynamic and modern weather app built using WeatherAPI's key. 
+A dynamic and modern weather app built using WeatherAPI.
