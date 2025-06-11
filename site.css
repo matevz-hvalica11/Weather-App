@@ -1,0 +1,328 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    height: 100%;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px;
+    text-align: center;
+}
+
+.header {
+    margin-bottom: 20px;
+}
+
+    .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+.clock {
+    font-size: 1.5rem;
+}
+
+.search-bar {
+    margin-bottom: 20px;
+}
+
+.weather-card {
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out;
+}
+
+    .weather-card:hover {
+        transform: scale(1.02);
+    }
+
+.weather-icon {
+    font-size: 55px;
+    color: #003366;
+    margin-bottom: 10px;
+    display: block;
+    margin: 0 auto;
+}
+
+.form-control {
+    width: 300px;
+    max-width: 80%;
+    padding: 10px 15px;
+    font-size: 1.2rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 10px;
+    transition: border 0.3s ease;
+}
+
+    .form-control:focus {
+        border-color: #007bff
+    }
+
+.btn {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+.form-control:focus {
+    border-color: #007bff;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+.btn-outline-primary {
+    background-color: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+}
+
+    .btn-outline-primary:hover {
+        background: #007bff;
+        color: #fff;
+    }
+
+.btn-outline-secondary {
+    background-color: transparent;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: #fff
+    }
+
+.card {
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 500px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+.horizontal-layout {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.forecast {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.forecast-card {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+    text-align: center;
+}
+
+.default-bg {
+    background: linear-gradient(135deg, #eee, #ddd);
+}
+
+.rainy-bg {
+    background: linear-gradient(135deg, #2c3e50, #4a6690);
+}
+
+.sunny-bg {
+    background: linear-gradient(135deg, #fceabb, #f8b500);
+}
+
+.cloudy-bg {
+    background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+}
+
+.foggy-bg {
+    background: linear-gradient(135deg, #a1a1a1, #c0c0c0);
+}
+
+.snowy-bg {
+    background: linear-gradient(135deg, #83a4d4, #b6fbff);
+}
+
+.extended-info {
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background-attachment: fixed;
+    background-image: url('/images/sky-gradient.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.extended-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-link {
+    padding: 10px 20px;
+    border: none;
+    background: #f0f0f0;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+    .tab-link.active,
+    .tab-link:hover {
+        background: #007bff;
+        color: #fff;
+    }
+
+.tab-content {
+    display: none;
+}
+
+    .tab-content.active {
+        display: block;
+    }
+
+.hourly-forecast {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 0;
+    justify-content: space-around;
+    margin-bottom: 50px;
+    padding-bottom: 20px;
+}
+
+.hourly-card {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s ease-in-out;
+    padding: 15px;
+    border-radius: 10px;
+    min-width: 100px;
+    text-align: center;
+}
+
+.metrics-grid {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 5px;
+    min-width: 120px;
+    text-align: center;
+}
+
+.weather-tips {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-top: 10px
+}
+
+.weather-title {
+    font-size: 1.6rem;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.weather-metrics {
+    font-size: 1.3rem;
+    margin-top: 15px;
+    padding: 10px;
+    text-align: center;
+}
+
+.wind-speed {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.uv-index {
+    font-weight: bold;
+    color: #ff4500;
+}
+
+body.dark-mode {
+    background: linear-gradient(135deg, #a1a1a1, #2c2c2c);
+    color: #fff;
+}
+
+    body.dark-mode .btn {
+        min-height: 52px;
+        font-size: 1.2rem;
+        padding: 0.85rem 1.5rem;
+        border-radius: 8px;
+        background-color: #3a3b3c;
+        border: none;
+        color: #fff;
+    }
+
+    body.dark-mode .card {
+        background: rgba(36, 37, 38, 0.4);
+    }
+
+    body.dark-mode .form-control {
+        background: rgba(46, 46, 46, 0.8);
+        color: #fff;
+        border: 1px solid #555;
+    }
+
+    body.dark-mode .btn.btn-outline-primary,
+    body.dark-mode .btn.btn-outline-secondary {
+        background-color: transparent;
+        border: 2px solid #555;
+        color: #fff;
+    }
+
+        body.dark-mode .btn.btn-outline-primary:hover,
+        body.dark-mode .btn.btn-outline-secondary:hover {
+            background-color: #555;
+            color: #fff;
+        }

@@ -1,0 +1,193 @@
+@model MyProjectW4.Models.WeatherModel
+@using System.Linq
+@{
+ <!-- Determine background class based on weather description -->
+    string backgroundClass = "default-bg";
+    var desc = Model.CurrentDescription?.ToLower() ?? "";
+
+    if (desc.Contains("rain") || desc.Contains("drizzle"))
+    {
+        backgroundClass = "rainy-bg";
+    }
+    else if (desc.Contains("clear") || desc.Contains("sunny"))
+    {
+        backgroundClass = "sunny-bg";
+    }
+    else if (desc.Contains("cloud"))
+    {
+        backgroundClass = "cloudy-bg";
+    }
+    else if (desc.Contains("fog") || desc.Contains("mist"))
+    {
+        backgroundClass = "foggy-bg";
+    }
+    else if (desc.Contains("snow"))
+    {
+        backgroundClass = "snowy-bg";
+    }
+
+ <!-- Dynamic weather fonts -->
+    string weatherIconClass = "fas fa-cloud";
+    if (desc.Contains("rain") || desc.Contains("drizzle"))
+    {
+        weatherIconClass = "fas fa-cloud-showers-heavy";
+    }
+    else if (desc.Contains("clear") || desc.Contains("sunny"))
+    {
+        weatherIconClass = "fas fa-sun";
+    }
+    else if (desc.Contains("cloud"))
+    {
+        weatherIconClass = "fas fa-cloud";
+    }
+    else if (desc.Contains("fog") || desc.Contains("mist"))
+    {
+        weatherIconClass = "fas fa-smog";
+    }
+    else if (desc.Contains("snow"))
+    {
+        weatherIconClass = "fas fa-snowflake";
+    }
+
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Global Weather Forecast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- The main CSS -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+    <!-- AOS for animations -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            AOS.init();
+        });
+    </script>
+</head>
+<body class="@backgroundClass">
+    <div class="container">
+        <header class="header">
+            <h1>Global Weather Forecast</h1>
+            <div id="clock" class="clock"></div>
+        </header>
+
+
+        <!-- Severe Weather Alert -->
+        <div id="weatherAlert" class="alert-danger" style="display: none;">
+            ⚠ Severe Weather Warning: Stay Safe!
+        </div>
+
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <form method="get" action="/Weather/Index" id="searchForm">
+                <input type="text" id="searchInput" name="city" value="@Model.City" placeholder="Enter any city..." class="form-control" />
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+
+
+        <!-- Button Group -->
+        <div class="button-group">
+            <button id="refreshButton" class="btn btn-outline-primary">Refresh</button>
+            <button id="themeToggleButton" class="btn btn-outline-secondary">Dark Theme</button>
+            <button id="tempToggleButton" class="btn btn-outline-primary">Show &#176;F</button>
+            <button id="shareButton" class="btn btn-outline-primary">Share Weather</button>
+        </div>
+
+
+        <!-- Main Weather Card -->
+        <div class="weather-card">
+            <!-- FontAwesome Weather Icon -->
+            <i class="@weatherIconClass weather-icon"></i>
+            <h2 class="weather-title">@Model.City</h2>
+            <p class="weather-description">@Model.CurrentDescription</p>
+
+            <!-- Main temperature with data attribute -->
+            <p id="wind-speed">💨 Wind Speed: @Model.CurrentWindSpeed km/h</p>
+            <p id="uv-index">☀️ UV Index: @Model.UVIndex</p>
+            <p id="humidity">💧 Humidity: @Model.CurrentHumidity %</p>
+            <p id="precipitation">🌧 Precipitation: @Model.CurrentPrecipitation mm</p>
+            <p id="temp-current" data-celsius="@Model.CurrentTemperature"></p>
+        </div>
+
+        <!-- Hourly Forecast Section -->
+        <section class="forecast-section">
+            <h3>Hourly Forecast</h3>
+            <div class="hourly-forecast">
+                @foreach (var hourData in Model.HourlyForecasts.Take(24))
+                {
+                <div class="hourly-card" data-aos="fade-up">
+                    <i class="fas fa-cloud-sun weather-icon"></i>
+                    <p>@DateTime.Parse(hourData.Time).ToString("h tt")</p>
+                    <p class="temp-hourly" data-celsius="@hourData.Temperature">
+                        Temp: @hourData.Temperature &#176;C
+                    </p>
+                    <p>Rain: @hourData.ChanceOfRain %</p>
+                </div>
+                }
+            </div>
+        </section>
+
+
+        <!-- 3-Day Forecast Section -->
+        <section class="forecast-section">
+            <h3>3-Day Forecast</h3>
+            <div class="daily-forecast horizontal-layout" data-aos="fade-up">
+                @foreach (var forecast in Model.Forecasts)
+                {
+                    string forecastIconClass = "fas fa-cloud";
+                    var desc = forecast.Description?.ToLower() ?? "";
+
+                    if (desc.Contains("rain") || desc.Contains("drizzle"))
+                    {
+                        forecastIconClass = "fas fa-cloud-showers-heavy";
+                    }
+                    else if (desc.Contains("clear") || desc.Contains("sunny"))
+                    {
+                        forecastIconClass = "fas fa-sun";
+                    }
+                    else if (desc.Contains("cloud"))
+                    {
+                        forecastIconClass = "fas fa-cloud";
+                    }
+                    else if (desc.Contains("fog") || desc.Contains("mist"))
+                    {
+                        forecastIconClass = "fas fa-smog";
+                    }
+                    else if (desc.Contains("snow"))
+                    {
+                        forecastIconClass = "fas fa-snowflake";
+                    }
+
+                <div class="forecast-card">
+                    <h4>@(DateTime.TryParse(forecast.Date, out DateTime dt) ? dt.ToString("dd MMM yyyy") : forecast.Date)</h4>
+                    <i class="@forecastIconClass weather-icon"></i>
+                    <p>@forecast.Description</p>
+                    <p class="temp-forecast" data-celsius="@forecast.Temperature">
+                        @forecast.Temperature &#176;C
+                    </p>
+                </div>
+            }
+            </div>
+        </section>
+    </div>
+
+    <!-- Interactive world map -->
+    <div id="weather-map" style="height: 500px;"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+
+    <!-- The main JavaScript -->
+    <script src="~/js/site.js"></script>
+</body>
+</html>
