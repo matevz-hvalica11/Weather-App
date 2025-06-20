@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("site.js loaded.");
 
     // --- Temperature Unit Toggle ---
@@ -151,33 +151,41 @@
 
     // --- Weather Fetching ---
     function fetchWeatherForLocation(lat, lon, cityName) {
-        var apiKey = '2636c1fbccab4bdf98394827251106';
-        var weatherUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}`;
+        var apiKey = '3674414d18e24d4db29142118251206';
+        var weatherUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=3`;
 
         console.log("✅ Fetching fresh weather data for:", cityName);
 
         fetch(weatherUrl)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (!data || !data.current) {
-                    console.error("❌ API response missing required weather data.");
+                if (!data || !data.current || !data.forecast) {
+                    console.error("API response missing required weather data.");
                     return;
                 }
+
                 console.log("✅ API Response:", JSON.stringify(data, null, 2));
+
                 updateWeather(data);
                 updateBackground(data.current.condition.text);
+                updateForecasts(data);
 
-                // ✅ Move map only after weather data loads
+                // Move map only after weather data loads
                 window.map.setView([lat, lon], 10);
                 setTimeout(() => {
-                    window.map.flyTo([lat, lon], 10, { animate: true, duration: 1.5, easeLinearity: 0.5 });
-                    console.log(`✅ Map visually moved to: ${cityName} (${lat}, ${lon})`);
+                    window.map.flyTo({ lat, lon }, 10, { animate: true, duration: 1.5, easeLinearity: 0.5 });
+                    console.log(`Map visually moved to: ${cityName} (${lat}, ${lon})`);
                 }, 500);
             })
-            .catch(error => console.error("❌ Error fetching weather:", error));
+            .catch(error => console.error("Error fetching weather:", error));
     }
 
-    // --- Search Form ---
+    // --- Search form ---
     document.getElementById("searchForm").addEventListener("submit", function (event) {
         event.preventDefault();
         console.log("✅ Search button clicked!");
@@ -188,10 +196,10 @@
             return;
         }
 
-        var apiKey = '2636c1fbccab4bdf98394827251106';
+        var apiKey = '3674414d18e24d4db29142118251206';
         var geoUrl = `https://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${cityName}`;
 
-        console.log("✅ Sending API request:", geoUrl);
+        console.log("Sending API request:", geoUrl);
 
         fetch(geoUrl)
             .then(response => response.json())
@@ -216,11 +224,12 @@
                     return;
                 }
 
-                console.log(`✅ Selected Location: ${selectedLocation.name}, ${selectedLocation.country}`);
+                console.log(`Selected Location: ${selectedLocation.name}, ${selectedLocation.country}`);
                 fetchWeatherForLocation(lat, lon, selectedLocation.name);
             })
             .catch(error => console.error("❌ Error fetching coordinates:", error));
     });
+
 
     // --- Interactive Map Setup ---
     if (!window.map) {
@@ -238,18 +247,19 @@
         });
     }
 
+
     // --- Weather UI Update ---
     function updateWeather(data) {
         var cityElem = document.querySelector(".weather-title");
         var tempElem = document.getElementById("temp-current");
-        var weatherDescElem = document.querySelector(".weather-description");
+        var weatherDescElem = document.querySelector(".weather-description")
         var windSpeedElem = document.getElementById("wind-speed");
         var uvIndexElem = document.getElementById("uv-index");
         var humidityElem = document.getElementById("humidity");
         var precipitationElem = document.getElementById("precipitation");
 
         if (!cityElem || !tempElem || !weatherDescElem || !windSpeedElem || !uvIndexElem || !humidityElem || !precipitationElem) {
-            console.warn("❌ Weather elements missing in DOM, skipping update.");
+            console.warn("❌ Weather elements missing in DOM. Skipping update");
             return;
         }
 
@@ -259,41 +269,57 @@
         windSpeedElem.textContent = `💨 Wind Speed: ${data.current.wind_kph} km/h`;
         uvIndexElem.textContent = `☀️ UV Index: ${data.current.uv}`;
         humidityElem.textContent = `💧 Humidity: ${data.current.humidity} %`;
-        precipitationElem.textContent = `🌧 Precipitation: ${data.current.precip_mm} mm`;
+        precipitationElem.textContent = `🌧 Precipitation: ${data.current.precip_mm}`;
 
         console.log("✅ Weather successfully updated!");
     }
 
-    // Clear previous forecast data before updating
-    hourlyForecastElem.innerHTML = "";
-    dailyForecastElem.innerHTML = "";
 
-    // Insert updated hourly forecast dynamically
-    data.forecast.forecastday[0].hour.forEach((hourData) => {
-        var hourBlock = document.createElement("div");
-        hourBlock.classList.add("hourly-card");
-        hourBlock.innerHTML = `
-            <p>${new Date(hourData.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-            <p class="temp-hourly">${hourData.temp_c}°C</p>
-            <p>🌧 Rain: ${hourData.chance_of_rain}%</p>
-        `;
-        hourlyForecastElem.appendChild(hourBlock);
-    });
+    // --- Forecast UI Update ---
+    function updateForecasts(data) {
+        var hourlyForecastElem = document.getElementById("hourly-forecast");
+        var dailyForecastElem = document.getElementById("daily-forecast");
 
-    // Insert updated 3-day forecast dynamically
-    data.forecast.forecastday.forEach((forecast) => {
-        var forecastBlock = document.createElement("div");
-        forecastBlock.classList.add("forecast-card");
-        forecastBlock.innerHTML = `
-            <h4>${new Date(forecast.date).toLocaleDateString()}</h4>
-            <p>${forecast.day.condition.text}</p>
-            <p class="temp-forecast">${forecast.day.avgtemp_c}°C</p>
-            <p>🌧 Rain Chance: ${forecast.day.daily_chance_of_rain}%</p>
-        `;
-        dailyForecastElem.appendChild(forecastBlock);
-    });
+        if (!hourlyForecastElem || !dailyForecastElem) {
+            console.error("❌ Error: Forecast elements missing in DOM.");
+            return;
+        }
 
-    console.log("Hourly & 3-day forecast refreshed dynamically!");
+
+        // Clear previous forecast data
+        hourlyForecastElem.innerHTML = "";
+        dailyForecastElem.innerHTML = "";
+
+
+        // Insert updated hourly forecast dynamically
+        data.forecast.forecastday[0].hour.forEach((hourData) => {
+            var hourBlock = document.createElement("div");
+            hourBlock.classList.add("hourly-card");
+            hourBlock.innerHTML = `
+                <p>${new Date(hourData.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <p class="temp-hourly">${hourData.temp_c}°C</p>
+                <p> Rain: ${hourData.chance_of_rain}%</p>
+            `;
+            hourlyForecastElem.appendChild(hourBlock);
+        });
+
+
+        // Insert updated 3-day forecast dynamically
+        data.forecast.forecastday.forEach((forecast) => {
+            var forecastBlock = document.createElement("div");
+            forecastBlock.classList.add("forecast-card");
+            forecastBlock.innerHTML = `
+                <h4>${new Date(forecast.date).toLocaleDateString()}</h4>
+                <p>${forecast.day.condition.text}</p>
+                <p class="temp-forecast">${forecast.day.avgtemp_c}°C</p>
+                <p> Rain Chance: ${forecast.day.daily_chance_of_rain}%</p>
+            `;
+            dailyForecastElem.appendChild(forecastBlock);
+        });
+
+        console.log("✅ Hourly & 3-day forecast updated dynamically!");
+    }
+
 
     // --- Dynamic Background ---
     function updateBackground(weatherCondition) {
