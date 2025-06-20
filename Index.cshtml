@@ -120,11 +120,10 @@
         </div>
 
         <!-- Hourly Forecast Section -->
-        <section class="forecast-section">
-            <h3>Hourly Forecast</h3>
-            <div class="hourly-forecast">
-                @foreach (var hourData in Model.HourlyForecasts.Take(24))
-                {
+        <div id="hourly-forecast" class="hourly-forecast">
+            @foreach (var hourData in Model.HourlyForecasts.Take(24))
+            {
+                <!-- Keep this Razor fallback data -->
                 <div class="hourly-card" data-aos="fade-up">
                     <i class="fas fa-cloud-sun weather-icon"></i>
                     <p>@DateTime.Parse(hourData.Time).ToString("h tt")</p>
@@ -133,15 +132,14 @@
                     </p>
                     <p>Rain: @hourData.ChanceOfRain %</p>
                 </div>
-                }
-            </div>
-        </section>
+            }
+        </div>
 
 
         <!-- 3-Day Forecast Section -->
         <section class="forecast-section">
             <h3>3-Day Forecast</h3>
-            <div class="daily-forecast horizontal-layout" data-aos="fade-up">
+            <div id="daily-forecast" class="daily-forecast horizontal-layout" data-aos="fade-up">
                 @foreach (var forecast in Model.Forecasts)
                 {
                     string forecastIconClass = "fas fa-cloud";
