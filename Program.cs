@@ -1,53 +1,30 @@
-using Microsoft.AspNetCore.StaticFiles;
-using Umbraco.Cms.Web.Common.ApplicationBuilder;
-
 var builder = WebApplication.CreateBuilder(args);
 
-builder.CreateUmbracoBuilder()
-    .AddBackOffice()
-    .AddWebsite()
-    .AddComposers()
-    .Build();
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// The magic line
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-await app.BootUmbracoAsync();
-
-app.UseStaticFiles(new StaticFileOptions
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
 {
-    ContentTypeProvider = new FileExtensionContentTypeProvider()
-    {
-        Mappings =
-        {
-            [".woff2"] = "font/woff2",
-            [".woff"] = "font/woff",
-            [".tff"] = "font/ttf"
-        }
-    }
-});
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
 
-app.UseUmbraco()
-    .WithMiddleware(u =>
-    {
-        u.UseBackOffice();
-        u.UseWebsite();
-    })
-    .WithEndpoints(u =>
-    {
-        u.UseBackOfficeEndpoints();
-        u.UseWebsiteEndpoints();
-    });
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
 
 app.MapControllerRoute(
-    name: "weather",
-    pattern: "Weather/{action=Index}/{city?}",
-    defaults: new { controller = "Weather" }
-);
+    name: "default",
+    pattern: "{controller=Weather}/{action=Index}/{id?}");
 
-app.MapFallback(context =>
-{
-    context.Response.StatusCode = 404;
-    return context.Response.WriteAsync("Site was not found (404).");
-});
-
-await app.RunAsync();
+app.Run();
