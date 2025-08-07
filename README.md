@@ -8,4 +8,6 @@ My proudest feature was implementing leaflet.js into the API, and coded it into 
 
 The map is now fully available via the Azure Cloud, finally released it from its Umbraco reins, and you can use it for yourself via this link https://myweatherappdeployed-hmdmgmeccgejfbat.westeurope-01.azurewebsites.net/?city=
 
+Weather icons used by Erik Flowers - erik@helloerik.com, link to the icons http://erikflowers.github.io/weather-icons
+
 I am constantly updating the Weather App daily, so, not everything will be perfect. Still polishing the UI and soon will add more features in. In the meantime? Enjoy it.
