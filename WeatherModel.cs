@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
-using Umbraco.Cms.Core.Media.EmbedProviders;
-using System;
-using System.Linq;
+using System.Collections.Generic;
 
-namespace MyProjectW4.Models
+namespace MyWeatherApp_Deployed.Models
 {
     public class WeatherModel
     {
-        // Base weather properties with default values
-        public string City { get; set; } = string.Empty;
-        public string CurrentDescription { get; set; } = string.Empty;
+        public string CityName { get; set; } = string.Empty;
+        public string TempUnit { get; set; } = "C";
+        public string CurrentCondition { get; set; } = string.Empty;
         public double CurrentTemperature { get; set; }
         public int CurrentHumidity { get; set; }
         public double CurrentWindSpeed { get; set; }
@@ -18,17 +15,23 @@ namespace MyProjectW4.Models
         public double UVIndex { get; set; }
         public string CurrentIcon { get; set; } = string.Empty;
         public string CurrentIconUrl { get; set; } = string.Empty;
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
 
-        // Lists for daily and hourly forecasts; initialized here so they are never null.
-        public List<DailyForecast> Forecasts dotnet{ get; set; } = new List<DailyForecast>();
-        public List<HourlyForecast> HourlyForecasts { get; set; } = new List<HourlyForecast>();
+        public List<DailyForecast> Forecasts { get; set; } = new();
+        public List<HourlyForecast> Hourly { get; set; } = new();
 
+        public string FeelsLike => $"{FeelsLikeTemperature:0#}";
+        public string WindSpeed => $"{CurrentWindSpeed:0.#}";
+        public string Humidity => $"{CurrentHumidity}";
+        public string UV => $"{UVIndex:0.#}";
+        public string CurrentTemp => $"{CurrentTemperature:0.#}";
 
         public string CurrentIconClass
         {
             get
             {
-                var lower = CurrentDescription?.ToLower() ?? "";
+                var lower = CurrentCondition?.ToLower() ?? "";
                 if (lower.Contains("clear") || lower.Contains("sunny")) return "wi-day-sunny";
                 if (lower.Contains("cloud") || lower.Contains("overcast")) return "wi-cloudy";
                 if (lower.Contains("rain") || lower.Contains("drizzle")) return "wi-rain";
@@ -39,58 +42,41 @@ namespace MyProjectW4.Models
             }
         }
 
-        public string GetWeatherIcon(string condition)
-        {
-            if (string.IsNullOrWhiteSpace(condition)) return "wi-na";
-
-            var lowerCondition = condition.ToLower();
-            return lowerCondition switch
-            {
-                "sunny" => "wi-day-sunny",
-                "cloudy" => "wi-cloudy",
-                "partly cloudy" => "wi-day-cloudy",
-                "rain" => "wi-rain",
-                "thunderstorm" => "wi-thunderstorm",
-                "snow" => "wi-snow",
-                "fog" => "wi-fog",
-                "mist" => "wi-fog",
-                "windy" => "wi-strong-wind",
-                _ => "wi-na"
-            };
-        }
-
-        // Nested class for daily forecast data
         public class DailyForecast
         {
             public string Date { get; set; } = string.Empty;
             public string Description { get; set; } = string.Empty;
-            public double Temperature { get; set; }
-            public string IconUrl { get; set; } = string.Empty;
+            public double MaxTemp { get; set; }
+            public double MinTemp { get; set; }
 
-            public string IconClass
-            {
-                get
-                {
-                    var lower = Description?.ToLower() ?? "";
-                    if (lower.Contains("clear") || lower.Contains("sunny")) return "wi-day-sunny";
-                    if (lower.Contains("cloud") || lower.Contains("overcast")) return "wi-cloudy";
-                    if (lower.Contains("rain") || lower.Contains("drizzle")) return "wi-rain";
-                    if (lower.Contains("thunder")) return "wi-thunderstorm";
-                    if (lower.Contains("snow")) return "wi-snow";
-                    if (lower.Contains("mist") || lower.Contains("fog")) return "wi-fog";
-                    return "wi-na";
-                }
-            }
+            public string IconClass => new WeatherModel().GetWeatherIcon(Description);
         }
 
-        // Nested class for hourly forecast data
         public class HourlyForecast
         {
-            // Initialize 'Time' to an empty string to avoid nullability warnings. 
             public string Time { get; set; } = string.Empty;
             public double Temperature { get; set; }
-            public double ChanceOfRain { get; set; }
             public string Condition { get; set; } = string.Empty;
+
+            public string Temp => $"{Temperature:0.#}";
+            public string IconClass => new WeatherModel().GetWeatherIcon(Condition);
+        }
+
+
+        public string GetWeatherIcon(string condition)
+        {
+            var lower = condition?.ToLower() ?? "";
+
+            if (lower.Contains("clear") || lower.Contains("sunny")) return "wi wi-day-sunny";
+            if (lower.Contains("partly") && lower.Contains("cloud")) return "wi wi-day-cloudy";
+            if (lower.Contains("cloud") || lower.Contains("overcast")) return "wi wi-cloudy";
+            if (lower.Contains("rain") || lower.Contains("drizzle")) return "wi wi-rain";
+            if (lower.Contains("thunder") || lower.Contains("storm")) return "wi wi-thunderstorm";
+            if (lower.Contains("snow") || lower.Contains("sleet")) return "wi wi-snow";
+            if (lower.Contains("fog") || lower.Contains("mist") || lower.Contains("haze")) return "wi wi-fog";
+            if (lower.Contains("wind")) return "wi wi-strong-wind";
+
+            return "wi wi-na";
         }
     }
 }
