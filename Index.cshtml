@@ -1,191 +1,169 @@
-@model MyProjectW4.Models.WeatherModel
-@using System.Linq
+@model MyWeatherApp_Deployed.Models.WeatherModel
 @{
- <!-- Determine background class based on weather description -->
-    string backgroundClass = "default-bg";
-    var desc = Model.CurrentDescription?.ToLower() ?? "";
-
-    if (desc.Contains("rain") || desc.Contains("drizzle"))
-    {
-        backgroundClass = "rainy-bg";
-    }
-    else if (desc.Contains("clear") || desc.Contains("sunny"))
-    {
-        backgroundClass = "sunny-bg";
-    }
-    else if (desc.Contains("cloud"))
-    {
-        backgroundClass = "cloudy-bg";
-    }
-    else if (desc.Contains("fog") || desc.Contains("mist"))
-    {
-        backgroundClass = "foggy-bg";
-    }
-    else if (desc.Contains("snow"))
-    {
-        backgroundClass = "snowy-bg";
-    }
-
- <!-- Dynamic weather fonts -->
-    string weatherIconClass = "fas fa-cloud";
-    if (desc.Contains("rain") || desc.Contains("drizzle"))
-    {
-        weatherIconClass = "fas fa-cloud-showers-heavy";
-    }
-    else if (desc.Contains("clear") || desc.Contains("sunny"))
-    {
-        weatherIconClass = "fas fa-sun";
-    }
-    else if (desc.Contains("cloud"))
-    {
-        weatherIconClass = "fas fa-cloud";
-    }
-    else if (desc.Contains("fog") || desc.Contains("mist"))
-    {
-        weatherIconClass = "fas fa-smog";
-    }
-    else if (desc.Contains("snow"))
-    {
-        weatherIconClass = "fas fa-snowflake";
-    }
-
+    ViewData["Title"] = "Weather Dashboard";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Global Weather Forecast</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- The main CSS -->
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<input type="hidden" id="mapLat" value="@Model.Latitude" />
+<input type="hidden" id="mapLon" value="@Model.Longitude" />
 
-    <!-- AOS for animations -->
-    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<div class="container">
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            AOS.init();
-        });
-    </script>
-</head>
-<body class="@backgroundClass">
-    <div class="container">
-        <header class="header">
-            <h1>Global Weather Forecast</h1>
-            <div id="clock" class="clock"></div>
-        </header>
-
-
-        <!-- Severe Weather Alert -->
-        <div id="weatherAlert" class="alert-danger" style="display: none;">
-            ⚠ Severe Weather Warning: Stay Safe!
+    <!-- Header Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-12 col-md-6 text-center text-md-start mb-3 mb-md-0">
+            <h2 class="fw-bold">@Model.CityName</h2>
         </div>
-
-
-        <!-- Search Bar -->
-        <div class="search-bar">
-            <form method="get" action="/Weather/Index" id="searchForm">
-                <input type="text" id="searchInput" name="city" value="@Model.City" placeholder="Enter any city..." class="form-control" />
-                <button type="submit" class="btn btn-primary">Search</button>
-            </form>
-        </div>
-
-
-        <!-- Button Group -->
-        <div class="button-group">
-            <button id="refreshButton" class="btn btn-outline-primary">Refresh</button>
-            <button id="themeToggleButton" class="btn btn-outline-secondary">Dark Theme</button>
-            <button id="tempToggleButton" class="btn btn-outline-primary">Show &#176;F</button>
-            <button id="shareButton" class="btn btn-outline-primary">Share Weather</button>
-        </div>
-
-
-        <!-- Main Weather Card -->
-        <div class="weather-card">
-            <!-- FontAwesome Weather Icon -->
-            <i class="@weatherIconClass weather-icon"></i>
-            <h2 class="weather-title">@Model.City</h2>
-            <p class="weather-description">@Model.CurrentDescription</p>
-
-            <!-- Main temperature with data attribute -->
-            <p id="wind-speed">💨 Wind Speed: @Model.CurrentWindSpeed km/h</p>
-            <p id="uv-index">☀️ UV Index: @Model.UVIndex</p>
-            <p id="humidity">💧 Humidity: @Model.CurrentHumidity %</p>
-            <p id="precipitation">🌧 Precipitation: @Model.CurrentPrecipitation mm</p>
-            <p id="temp-current" data-celsius="@Model.CurrentTemperature"></p>
-        </div>
-
-        <!-- Hourly Forecast Section -->
-        <div id="hourly-forecast" class="hourly-forecast">
-            @foreach (var hourData in Model.HourlyForecasts.Take(24))
-            {
-                <!-- Keep this Razor fallback data -->
-                <div class="hourly-card" data-aos="fade-up">
-                    <i class="fas fa-cloud-sun weather-icon"></i>
-                    <p>@DateTime.Parse(hourData.Time).ToString("h tt")</p>
-                    <p class="temp-hourly" data-celsius="@hourData.Temperature">
-                        Temp: @hourData.Temperature &#176;C
-                    </p>
-                    <p>Rain: @hourData.ChanceOfRain %</p>
-                </div>
-            }
-        </div>
-
-
-        <!-- 3-Day Forecast Section -->
-        <section class="forecast-section">
-            <h3>3-Day Forecast</h3>
-            <div id="daily-forecast" class="daily-forecast horizontal-layout" data-aos="fade-up">
-                @foreach (var forecast in Model.Forecasts)
-                {
-                    string forecastIconClass = "fas fa-cloud";
-                    var desc = forecast.Description?.ToLower() ?? "";
-
-                    if (desc.Contains("rain") || desc.Contains("drizzle"))
-                    {
-                        forecastIconClass = "fas fa-cloud-showers-heavy";
-                    }
-                    else if (desc.Contains("clear") || desc.Contains("sunny"))
-                    {
-                        forecastIconClass = "fas fa-sun";
-                    }
-                    else if (desc.Contains("cloud"))
-                    {
-                        forecastIconClass = "fas fa-cloud";
-                    }
-                    else if (desc.Contains("fog") || desc.Contains("mist"))
-                    {
-                        forecastIconClass = "fas fa-smog";
-                    }
-                    else if (desc.Contains("snow"))
-                    {
-                        forecastIconClass = "fas fa-snowflake";
-                    }
-
-                <div class="forecast-card">
-                    <h4>@(DateTime.TryParse(forecast.Date, out DateTime dt) ? dt.ToString("dd MMM yyyy") : forecast.Date)</h4>
-                    <i class="@forecastIconClass weather-icon"></i>
-                    <p>@forecast.Description</p>
-                    <p class="temp-forecast" data-celsius="@forecast.Temperature">
-                        @forecast.Temperature &#176;C
-                    </p>
-                </div>
-            }
+        <div class="col-12 col-md-6 text-center text-md-end mt-3 mt-md-0">
+            <div class="d-flex flex-wrap justify-content-md-end gap-3">
+                <button id="refreshButton" class="btn btn-outline-primary px-4 py-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button id="themeToggleButton" class="btn btn-outline-dark px-4 py-2">
+                    <i class="fas fa-moon"></i> Dark Theme
+                </button>
+                <button id="tempToggleButton" class="btn btn-outline-primary px-4 py-2">
+                    Toggle °C/°F
+                </button>
+                <button id="shareButton" class="btn btn-outline-secondary px-4 py-2">
+                    Share <i class="fas fa-share-alt ms-1"></i>
+                </button>
             </div>
-        </section>
+        </div>
     </div>
 
-    <!-- Interactive world map -->
-    <div id="weather-map" style="height: 500px;"></div>
+    <!-- Current Condition Text -->
+    <p id="weather-condition" class="lead text-center mb-5">@Model.CurrentCondition</p>
 
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- Search Bar & City Dropdown -->
+    <div class="row mb-5 justify-content-center gx-3 gy-3">
+        <div class="col-12 col-md-auto">
+            <form method="get" asp-action="Index" asp-controller="Weather" class="d-flex gap-3">
+                <input type="text" name="city" class="form-control" placeholder="Enter city..." />
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </form>
+        </div>
+        <div class="col-12 col-md-auto">
+            <select id="citySelect" class="form-control">
+                <option value="">--Choose city--</option> 
+                <option value="Amsterdam">Amsterdam</option>
+                <option value="Atlanta">Atlanta</option>
+                <option value="Baghdad">Baghdad</option>
+                <option value="Beijing">Beijing</option>
+                <option value="Beograd">Beograd</option>
+                <option value="Berlin">Berlin</option>
+                <option value="Boston">Boston</option>
+                <option value="Bratislava">Bratislava</option>
+                <option value="Buenos Aires">Buenos Aires</option>
+                <option value="Cairo">Cairo</option>
+                <option value="Chicago">Chicago</option>
+                <option value="Dubai">Dubai</option>
+                <option value="Doha">Doha</option>
+                <option value="Havana">Havana</option>
+                <option value="Houston">Houston</option>
+                <option value="Istanbul">Istanbul</option>
+                <option value="Jerusalem">Jerusalem</option>
+                <option value="Kingston">Kingston</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Kyiv">Kyiv</option>
+                <option value="Ljubljana">Ljubljana</option>
+                <option value="London">London</option>
+                <option value="Los Angeles">Los Angeles</option>
+                <option value="Madrid">Madrid</option>
+                <option value="Miami">Miami</option>
+                <option value="Moscow">Moscow</option>
+                <option value="Nassau">Nassau</option>
+                <option value="New Delhi">New Delhi</option>
+                <option value="New York">New York</option>
+                <option value="Paris">Paris</option>
+                <option value="Philadelphia">Philadelphia</option>
+                <option value="Prague">Prague</option>
+                <option value="Rio de Janeiro">Rio de Janeiro</option>
+                <option value="Rome">Rome</option>
+                <option value="Sarajevo">Sarajevo</option>
+                <option value="Santo Domingo">Santo Domingo</option>
+                <option value="Shanghai">Shanghai</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Sydney">Sydney</option>
+                <option value="Tokyo">Tokyo</option>
+                <option value="Vienna">Vienna</option>
+                <option value="Warsaw">Warsaw</option>
+                <option value="Zagreb">Zagreb</option>
+            </select>
+        </div>
+    </div>
 
+    <!-- Real-time Clock -->
+    <div class="text-center mb-4">
+        <span id="clock" class="fs-4 fw-bold"></span>
+    </div>
 
-    <!-- The main JavaScript -->
-    <script src="~/js/site.js"></script>
-</body>
-</html>
+    <!-- Current Weather Card -->
+    <div class="card shadow-sm text-center mb-5 py-5 px-3">
+        <i class="@Model.CurrentIconClass weather-icon mb-3"></i>
+        <h1 class="display-4 mb-2">@Model.CurrentTemperature &deg;@Model.TempUnit</h1>
+        <p class="lead mb-2">@Model.CurrentCondition</p>
+        <small>Feels like: @Model.FeelsLikeTemperature &deg;@Model.TempUnit</small>
+    </div>
+
+    <!-- Hourly Forecast -->
+    <div class="hourly-forecast-container overflow-auto mb-5 pb-2">
+        <div class="d-flex hourly-forecast gap-4 px-2">
+            @foreach (var hour in Model.Hourly.Take(24))
+            {
+                <div class="hourly-card text-center min-width-hour px-3 py-2">
+                    <div class="fw-bold mb-1">@hour.Time</div>
+                    <i class="@hour.IconClass weather-icon mb-1"></i>
+                    <div>@hour.Temperature &deg;@Model.TempUnit</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 3-Day Forecast -->
+    <div class="row justify-content-center g-4 mb-5">
+        @foreach (var forecast in Model.Forecasts)
+        {
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card forecast-card h-100 text-center p-4">
+                    <h5 class="card-title">@forecast.Date</h5>
+                    <i class="@forecast.IconClass weather-icon card-icon mb-3"></i>
+                    <p class="card-text mb-2">@forecast.Description</p>
+                    <p class="card-text fw-bold">
+                        High: @forecast.MaxTemp&deg;<br />
+                        Low: @forecast.MinTemp&deg;
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Weather Metrics -->
+    <div class="row text-center mb-5 g-4">
+        <div class="col-12 col-md-4">
+            <div class="card p-4">
+                <h6 class="mb-2">UV Index</h6>
+                <div class="uv-index">@Model.UVIndex</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card p-4">
+                <h6 class="mb-2">Wind</h6>
+                <div class="wind-speed">@Model.CurrentWindSpeed km/h</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card p-4">
+                <h6 class="mb-2">Humidity</h6>
+                <div>@Model.CurrentHumidity %</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Map -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-12 col-lg-10">
+            <div id="weather-map" style="height: 80vh; width: 100%;"></div>
+        </div>
+    </div>
+
+</div>
