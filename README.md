@@ -10,4 +10,6 @@ The map is now fully available via the Azure Cloud, finally released it from its
 
 Weather icons used by Erik Flowers - erik@helloerik.com, link to the icons http://erikflowers.github.io/weather-icons
 
+Weather map used from https://leafletjs.com
+
 I am constantly updating the Weather App daily, so, not everything will be perfect. Still polishing the UI and soon will add more features in. In the meantime? Enjoy it.
