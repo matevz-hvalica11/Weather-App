@@ -1,4 +1,4 @@
-# Weather-App
+# Weather App
 A dynamic and modern weather app built using an API key from WeatherAPI and coded via Visual Studio 2022.
 
 
