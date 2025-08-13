@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dewEl = document.getElementById('dewPointValue');
         const precipEl = document.getElementById('precipValue');
         const aqiEl = document.getElementById('airQualityValue');
+        const windEl = document.getElementById('windSpeedValue');
 
         if (tempEl) {
             tempEl.textContent = `${tempEl.dataset[tempUnit.toLowerCase()]} °${tempUnit}`;
@@ -105,6 +106,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (aqiEl) {
             const index = parseInt(aqiEl.dataset.index, 10);
             aqiEl.style.color = getAqiColor(index);
+        }
+        if (windEl && windEl.dataset) {
+            const isImperial = tempUnit === "F";
+            const v = isImperial ? windEl.dataset.mph : windEl.dataset.kph;
+            windEl.textContent = v ? `${v} ${isImperial ? "mph" : "km/h"}` : "";
         }
     }
 
@@ -176,6 +182,21 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = url.toString(); // Reload with new unit
         });
     }
+
+
+    function syncTempUnitWithServer() {
+        const serverUnit = document.getElementById('serverUnit')?.value || "C";
+        // Always trust the server on page load
+        localStorage.setItem("tempUnit", serverUnit);
+
+        if (typeof tempToggleButton !== "undefined" && tempToggleButton) {
+            tempToggleButton.textContent = serverUnit === "F" ? "Show °C" : "Show °F";
+        }
+    }
+
+    syncTempUnitWithServer();
+    updateExtraMetrics();
+
 
     function toggleTempUnit() {
         const currentUnit = localStorage.getItem("tempUnit") || "C";
