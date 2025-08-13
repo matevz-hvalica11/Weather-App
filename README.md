@@ -25,6 +25,7 @@ Interactive Map → Integrated with leaflet.js to auto‑hover over searched loc
 
 ☁️ Cloud Deployment
 Hosted on Azure Cloud — globally accessible, scalable, and future‑ready. 🔗 Live app: https://myweatherappdeployed-hmdmgmeccgejfbat.westeurope-01.azurewebsites.net/?city=
+(Highly recommend keeping the Page Zoom at 100% for the best viewing experience)
 
 🖼️ Credits
 Weather Icons → Erik Flowers
