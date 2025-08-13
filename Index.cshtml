@@ -1,12 +1,33 @@
 @model MyWeatherApp_Deployed.Models.WeatherModel
 @{
     ViewData["Title"] = "Weather Dashboard";
+
+    // Prepare both-unit values so JS can toggle instantly without reload
+    // Current temperature
+    double tempC = Model.TempUnit == "C" ? Model.CurrentTemperature : (Model.CurrentTemperature - 32.0) * 5.0 / 9.0;
+    double tempF = Model.TempUnit == "F" ? Model.CurrentTemperature : (Model.CurrentTemperature * 9.0 / 5.0) + 32.0;
+
+    // Feels like (optional for instant toggle - keeping display static as before)
+    double feelsC = Model.TempUnit == "C" ? Model.FeelsLikeTemperature : (Model.FeelsLikeTemperature - 32.0) * 5.0 / 9.0;
+    double feelsF = Model.TempUnit == "F" ? Model.FeelsLikeTemperature : (Model.FeelsLikeTemperature * 9.0 / 5.0) + 32.0;
+
+    // Dew point (using your property name from earlier message)
+    double dewSrc = Model.DewPointTemperature;
+    double dewC = Model.TempUnit == "C" ? dewSrc : (dewSrc - 32.0) * 5.0 / 9.0;
+    double dewF = Model.TempUnit == "F" ? dewSrc : (dewSrc * 9.0 / 5.0) + 32.0;
+
+    // Precipitation: we need both mm and in for toggling
+    // Your controller sets CurrentPrecipitation in the current unit; compute the other
+    double precipMm = Model.TempUnit == "F" ? Model.CurrentPrecipitation * 25.4 : Model.CurrentPrecipitation;
+    double precipIn = Model.TempUnit == "F" ? Model.CurrentPrecipitation : Model.CurrentPrecipitation / 25.4;
+
+    string currentUnit = Model.TempUnit; // "C" or "F"
 }
 
 <input type="hidden" id="mapLat" value="@Model.Latitude" />
 <input type="hidden" id="mapLon" value="@Model.Longitude" />
 
-<div class="container">
+<div class="main-content">
 
     <!-- Header Section -->
     <div class="row mb-5 align-items-center">
@@ -31,9 +52,6 @@
         </div>
     </div>
 
-    <!-- Current Condition Text -->
-    <p id="weather-condition" class="lead text-center mb-5">@Model.CurrentCondition</p>
-
     <!-- Search Bar & City Dropdown -->
     <div class="row mb-5 justify-content-center gx-3 gy-3">
         <div class="col-12 col-md-auto">
@@ -44,7 +62,7 @@
         </div>
         <div class="col-12 col-md-auto">
             <select id="citySelect" class="form-control">
-                <option value="">--Choose city--</option> 
+                <option value="">--Choose city--</option>
                 <option value="Amsterdam">Amsterdam</option>
                 <option value="Atlanta">Atlanta</option>
                 <option value="Baghdad">Baghdad</option>
@@ -98,12 +116,16 @@
     </div>
 
     <!-- Current Weather Card -->
-    <div class="card shadow-sm text-center mb-5 py-5 px-3">
+     <div class="card shadow-sm text-center mb-5 py-5 px-3">
         <i class="@Model.CurrentIconClass weather-icon mb-3"></i>
         <h1 class="display-4 mb-2">@Model.CurrentTemperature &deg;@Model.TempUnit</h1>
         <p class="lead mb-2">@Model.CurrentCondition</p>
         <small>Feels like: @Model.FeelsLikeTemperature &deg;@Model.TempUnit</small>
     </div>
+
+    <!-- Condition text used by JS for dynamic backgrounds -->
+        <p id="weather-condition" class="lead mb-2">@Model.CurrentCondition</p>
+
 
     <!-- Hourly Forecast -->
     <div class="hourly-forecast-container overflow-auto mb-5 pb-2">
@@ -137,27 +159,72 @@
         }
     </div>
 
-    <!-- Weather Metrics -->
-    <div class="row text-center mb-5 g-4">
-        <div class="col-12 col-md-4">
-            <div class="card p-4">
-                <h6 class="mb-2">UV Index</h6>
-                <div class="uv-index">@Model.UVIndex</div>
-            </div>
+   <!-- Weather Metrics — row 1 -->
+<div class="row text-center mb-5 g-4">
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">UV Index</h6>
+            <div class="uv-index">@Model.UVIndex</div>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card p-4">
-                <h6 class="mb-2">Wind</h6>
-                <div class="wind-speed">@Model.CurrentWindSpeed km/h</div>
-            </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">Wind</h6>
+            <div class="wind-speed">@Model.CurrentWindSpeed km/h</div>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card p-4">
-                <h6 class="mb-2">Humidity</h6>
-                <div>@Model.CurrentHumidity %</div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">Humidity</h6>
+            <div>@Model.CurrentHumidity %</div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather Metrics — row 2 (dew point, precipitation, AQI) -->
+<div class="row text-center mb-5 g-4">
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">Dew Point</h6>
+            <div id="dewPointValue"
+                 data-c="@dewC.ToString("0.#")"
+                 data-f="@dewF.ToString("0.#")">
+                @($"{(currentUnit == "C" ? dewC : dewF):0.#} °{currentUnit}")
             </div>
         </div>
     </div>
+
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">Precipitation</h6>
+            <div id="precipValue"
+                 data-mm="@precipMm.ToString("0.##")"
+                 data-in="@precipIn.ToString("0.##")">
+                @($"{(currentUnit == "C" ? precipMm : precipIn):0.##} {(currentUnit == "C" ? "mm" : "in")}")
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <h6 class="mb-2">Air Quality</h6>
+            <div id="airQualityValue"
+                 data-index="@Model.AirQuality.UsEpaIndex"
+                 data-category="@Model.AirQuality.Category">
+                @Model.AirQuality.UsEpaIndex (@Model.AirQuality.Category)
+            </div>
+            <small>
+                PM2.5 @Model.AirQuality.PM2_5.ToString("0.#")
+                • PM10 @Model.AirQuality.PM10.ToString("0.#")
+                • O₃ @Model.AirQuality.O3.ToString("0.#")
+            </small>
+        </div>
+    </div>
+</div>
+
+
 
     <!-- Weather Map -->
     <div class="row justify-content-center mb-5">
@@ -165,5 +232,5 @@
             <div id="weather-map" style="height: 80vh; width: 100%;"></div>
         </div>
     </div>
-
+  </div>
 </div>
