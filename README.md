@@ -24,7 +24,7 @@ Sharing → One‑click weather sharing across the web
 Interactive Map → Integrated with leaflet.js to auto‑hover over searched locations (e.g., Baghdad, Sydney, Buenos Aires)
 
 ☁️ Cloud Deployment
-Hosted on Azure Cloud — globally accessible, scalable, and future‑ready. 🔗 Live app: Launch Weather App
+Hosted on Azure Cloud — globally accessible, scalable, and future‑ready. 🔗 Live app: https://myweatherappdeployed-hmdmgmeccgejfbat.westeurope-01.azurewebsites.net/?city=
 
 🖼️ Credits
 Weather Icons → Erik Flowers
