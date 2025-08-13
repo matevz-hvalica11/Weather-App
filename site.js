@@ -1,17 +1,165 @@
+// site.js
 document.addEventListener('DOMContentLoaded', function () {
     console.log("✅ site.js loaded");
 
-
     // --- Constants ---
-    const bgClasses = ["default-bg", "sunny-bg", "rainy-bg", "cloudy-bg", "foggy-bg", "snowy-bg"];
+    const BG_CLASSES = ["default-bg", "sunny-bg", "rainy-bg", "cloudy-bg", "foggy-bg", "snowy-bg"];
     const tempToggleButton = document.getElementById('tempToggleButton');
     const themeToggleButton = document.getElementById("themeToggleButton");
     const refreshButton = document.getElementById("refreshButton");
     const shareButton = document.getElementById("shareButton");
-    const conditionText = document.querySelector("#weather-condition")?.textContent || "";
     const clockElem = document.getElementById("clock");
-
+    const overlay = document.getElementById("weather-overlay");
+    const citySelect = document.getElementById("citySelect");
     let mapTileLayer;
+
+    // --- Helpers: Weather condition source ---
+    function getConditionText() {
+        // Try a few likely places
+        const el1 = document.querySelector("#weather-condition");
+        const el2 = document.querySelector(".weather-description");
+        const text = (el1?.textContent || el2?.textContent || "").trim();
+        return text;
+    }
+
+    // Map condition text -> one of our known background classes
+    function mapConditionToClass(desc) {
+        const lower = desc.toLowerCase();
+
+        // Keep mapping within available classes
+        if (lower.includes("clear") || lower.includes("sunny")) return "sunny-bg";
+        if (lower.includes("thunder") || lower.includes("storm")) return "rainy-bg";
+        if (lower.includes("rain") || lower.includes("drizzle") || lower.includes("shower")) return "rainy-bg";
+        if (lower.includes("snow") || lower.includes("sleet") || lower.includes("blizzard")) return "snowy-bg";
+        if (lower.includes("fog") || lower.includes("mist") || lower.includes("haze") || lower.includes("smoke")) return "foggy-bg";
+        if (lower.includes("cloud") || lower.includes("overcast")) return "cloudy-bg";
+        return "default-bg";
+    }
+
+    function clearWeatherBackgrounds() {
+        document.body.classList.remove(...BG_CLASSES);
+        document.documentElement.classList.remove(...BG_CLASSES);
+    }
+
+    function applyWeatherBackground(desc) {
+        // Only in light mode
+        if (!desc) return;
+        if (document.body.classList.contains("dark-mode")) return;
+
+        clearWeatherBackgrounds();
+        const bgClass = mapConditionToClass(desc);
+        document.body.classList.add(bgClass);
+        document.documentElement.classList.add(bgClass);
+        console.log(`🌤️ Background set: ${bgClass} (from "${desc}")`);
+    }
+
+    function applyWeatherOverlay(desc) {
+        if (!overlay) return;
+        if (!desc) return;
+        if (document.body.classList.contains("dark-mode")) {
+            overlay.className = "";
+            return;
+        }
+
+        const lower = desc.toLowerCase();
+        overlay.className = ""; // reset overlay effects
+
+        if (lower.includes("fog") || lower.includes("mist") || lower.includes("haze") || lower.includes("smoke")) {
+            overlay.classList.add("fog-effect");
+        } else if (lower.includes("rain") || lower.includes("drizzle") || lower.includes("shower")) {
+            overlay.classList.add("rain-effect");
+        } else if (lower.includes("snow") || lower.includes("sleet")) {
+            overlay.classList.add("snow-effect");
+        } else if (lower.includes("clear") || lower.includes("sunny")) {
+            overlay.classList.add("sunray-effect");
+        }
+    }
+
+    function getAqiColor(index) {
+        if (index === 1) return "green";
+        if (index === 2) return "yellow";
+        if (index === 3) return "orange";
+        if (index === 4) return "red";
+        if (index === 5) return "purple";
+        if (index === 6) return "maroon";
+        return "inherit";
+    }
+
+    function updateExtraMetrics() {
+        const tempUnit = localStorage.getItem("tempUnit") || "C";
+
+        const tempEl = document.getElementById('tempValue');
+        const dewEl = document.getElementById('dewPointValue');
+        const precipEl = document.getElementById('precipValue');
+        const aqiEl = document.getElementById('airQualityValue');
+
+        if (tempEl) {
+            tempEl.textContent = `${tempEl.dataset[tempUnit.toLowerCase()]} °${tempUnit}`;
+        }
+        if (dewEl) {
+            dewEl.textContent = `${dewEl.dataset[tempUnit.toLowerCase()]} °${tempUnit}`;
+        }
+        if (precipEl) {
+            precipEl.textContent = `${precipEl.dataset[tempUnit === "C" ? "mm" : "in"]} ${tempUnit === "C" ? "mm" : "in"}`;
+        }
+        if (aqiEl) {
+            const index = parseInt(aqiEl.dataset.index, 10);
+            aqiEl.style.color = getAqiColor(index);
+        }
+    }
+
+
+    // Note: Previously this overwrote the body's background.
+    // If you want gradients, apply them via CSS classes instead of inline styles.
+    function applyTimeGradient() {
+        // Intentionally no-op to avoid overriding weather backgrounds.
+        // Keep for future: move to CSS classes like .time-morning, etc.
+    }
+
+    function applyWeatherUI() {
+        const desc = getConditionText();
+        applyWeatherBackground(desc);
+        applyWeatherOverlay(desc);
+        updateExtraMetrics();
+        // applyTimeGradient(); // disabled to protect background images
+    }
+
+    // --- Theme: setup & toggle ---
+    function setThemeFromStorage() {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        document.body.classList.toggle("dark-mode", savedTheme === "dark");
+        document.documentElement.classList.toggle("dark-mode", savedTheme === "dark");
+
+        if (savedTheme === "dark") {
+            clearWeatherBackgrounds();
+            if (overlay) overlay.className = "";
+        } else {
+            applyWeatherUI();
+        }
+        console.log("🌗 Theme on load:", savedTheme);
+    }
+
+    function toggleTheme() {
+        const willBeDark = !document.body.classList.contains("dark-mode");
+        document.body.classList.toggle("dark-mode", willBeDark);
+        document.documentElement.classList.toggle("dark-mode", willBeDark);
+        localStorage.setItem("theme", willBeDark ? "dark" : "light");
+        console.log("🌗 Theme:", willBeDark ? "dark" : "light");
+
+        if (willBeDark) {
+            clearWeatherBackgrounds();
+            if (overlay) overlay.className = "";
+        } else {
+            applyWeatherUI();
+        }
+
+        // Update map tiles dynamically
+        if (window.map && mapTileLayer) {
+            window.map.removeLayer(mapTileLayer);
+            mapTileLayer = createTileLayer();
+            mapTileLayer.addTo(window.map);
+        }
+    }
 
 
     // --- Temp Toggle: reloads page with new unit ---
@@ -29,97 +177,45 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function toggleTempUnit() {
+        const currentUnit = localStorage.getItem("tempUnit") || "C";
+        const newUnit = currentUnit === "C" ? "F" : "C";
+        localStorage.setItem("tempUnit", newUnit);
+        updateExtraMetrics();
+        tempToggleButton.textContent = newUnit === "F" ? "Show °C" : "Show °F";
+    }
 
-    // --- Theme Toggle ---
+    setThemeFromStorage();
+    updateExtraMetrics();
+
     if (themeToggleButton) {
-        themeToggleButton.addEventListener("click", () => {
-            document.body.classList.remove(...bgClasses);
-            document.body.classList.toggle("dark-mode");
-            const theme = document.body.classList.contains("dark-mode") ? "dark" : "light";
-            localStorage.setItem("theme", theme);
-            console.log("🌗 Theme:", theme);
-
-            // Update map tiles dynamically
-            if (window.map && mapTileLayer) {
-                window.map.removeLayer(mapTileLayer);
-                mapTileLayer = createTileLayer();
-                mapTileLayer.addTo(window.map);
-            }
-        });
+        themeToggleButton.addEventListener("click", toggleTheme);
     }
 
-
-    // --- Apply saved theme on load ---
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-        document.body.classList.remove(...bgClasses);
-        document.body.classList.add("dark-mode");
-        applyWeatherBackground(conditionText);
-        applyTimeGradient();
-    } else {
-        applyWeatherBackground(conditionText);
+    if (tempToggleButton) {
+        tempToggleButton.addEventListener("click", toggleTempUnit);
+        tempToggleButton.textContent =
+            (localStorage.getItem("tempUnit") || "C") === "F" ? "Show °C" : "Show °F";
     }
 
+    // Re-apply UI once everything is fully loaded (in case content hydrates late)
+    window.addEventListener("load", applyWeatherUI);
 
-    // --- Apply weather background ---
-    function applyWeatherBackground(desc) {
-        if (!desc || document.body.classList.contains("dark-mode")) return;
-        document.body.classList.remove(...bgClasses);
-        const lower = desc.toLowerCase();
-        if (lower.includes("clear") || lower.includes("sunny")) document.body.classList.add("sunny-bg");
-        else if (lower.includes("cloud")) document.body.classList.add("cloudy-bg");
-        else if (lower.includes("rain") || lower.includes("drizzle")) document.body.classList.add("rainy-bg");
-        else if (lower.includes("fog") || lower.includes("mist")) document.body.classList.add("foggy-bg");
-        else if (lower.includes("snow")) document.body.classList.add("snowy-bg");
-        else document.body.classList.add("default-bg");
+    // Optional: Re-apply if the condition text changes dynamically
+    const conditionEl = document.querySelector("#weather-condition, .weather-description");
+    if (conditionEl && window.MutationObserver) {
+        const mo = new MutationObserver(() => applyWeatherUI());
+        mo.observe(conditionEl, { childList: true, subtree: true, characterData: true });
     }
-
-
-    // --- Daylight Flow Transitions ---
-    function applyTimeGradient() {
-        if (document.body.classList.contains("dark-mode")) return; // Respect dark mode
-
-        const hour = new Date().getHours();
-        let gradient;
-
-        if (hour >= 6 && hour < 12) {
-            gradient = 'linear-gradient(to top, #FFEFBA, #FFFFFF)'; // Morning
-        } else if (hour >= 12 && hour < 18) {
-            gradient = 'linear-gradient(to top, #3498db, #FFFFFF)'; // Day
-        } else if (hour >= 18 && hour < 21) {
-            gradient = 'linear-gradient(to top, #FFD194, #D1913C)'; // Sunset
-        } else {
-            gradient = 'linear-gradient(to top, #2c3e50, #000000)'; // Night
-        }
-
-        document.body.style.background = gradient;
-        console.log("⏰ Time-based gradient applied:", gradient);
-    }
-
-
-    // --- Weather Overlay ---
-    function applyWeatherOverlay(desc) {
-        const overlay = document.getElementById("weather-overlay");
-        if (!overlay || document.body.classList.contains("dark-mode")) return;
-
-        const lower = desc.toLowerCase();
-        overlay.className = ""; // reset
-
-        if (lower.includes("fog") || lower.includes("mist")) overlay.classList.add("fog-effect");
-        else if (lower.includes("rain") || lower.includes("drizzle")) overlay.classList.add("rain-effect");
-        else if (lower.includes("snow")) overlay.classList.add("snow-effect");
-        else if (lower.includes("clear") || lower.includes("sunny")) overlay.classList.add("sunray-effect");
-
-        applyWeatherOverlay(conditionText);
-    } 
 
 
     // --- Manual Refresh ---
-    refreshButton?.addEventListener("click", () => {
-        console.log("🔄 Manual refresh");
-        location.reload();
-    });
-
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            console.log("🔄 Manual refresh");
+            location.reload();
+        });
+    }
 
     // --- Clock ---
     function updateClock() {
@@ -129,17 +225,13 @@ document.addEventListener('DOMContentLoaded', function () {
     updateClock();
     setInterval(updateClock, 1000);
 
-
     // --- Auto Refresh every 5 min ---
     setInterval(() => {
         console.log("🔁 Auto-refreshing");
         location.reload();
     }, 5 * 60 * 1000);
 
-
     // --- Search Dropdown Behavior ---
-    const citySelect = document.getElementById("citySelect");
-
     if (citySelect) {
         citySelect.addEventListener("change", function () {
             const selectedCity = this.value;
@@ -154,11 +246,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
     // --- Create Theme-Aware Tile Layer ---
     function createTileLayer() {
         const isDark = document.body.classList.contains("dark-mode");
-
         const tileLayerUrl = isDark
             ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -172,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
     // --- Map Setup ---
     if (!window.map && document.getElementById("weather-map")) {
         window.map = L.map("weather-map").setView([46.05, 14.51], 8);
@@ -180,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Use theme-aware tile layer
         mapTileLayer = createTileLayer();
         mapTileLayer.addTo(window.map);
-        console.log("Initial map tiles loaded");
+        console.log("🗺️ Initial map tiles loaded");
 
         // Delay moving the map until DOM is fully ready
         setTimeout(() => {
@@ -191,10 +280,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const lon = parseFloat(lonElem.value);
                 if (!isNaN(lat) && !isNaN(lon)) {
                     window.map.setView([lat, lon], 10);
-                    console.log(`Map moved to: ${lat}, ${lon}`);
+                    console.log(`🧭 Map moved to: ${lat}, ${lon}`);
                 }
             }
-        }, 250); //Delay ensures map renders before moving
+        }, 250);
 
         // Click to fetch weather
         window.map.on("click", function (e) {
@@ -205,40 +294,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
-    // --- Share Weather ---
-    if (shareButton) {
-        shareButton.addEventListener("click", () => {
-            const title = document.querySelector(".weather-title")?.textContent || "";
-            const temp = document.querySelector(".temp-current")?.textContent || "";
-            const desc = document.querySelector(".weather-description")?.textContent || "";
-            const msg = `🌦️ Weather in ${title}:\n${temp}\n${desc}`;
-
-            if (navigator.share) {
-                navigator.share({ title, text: msg, url: window.location.href })
-                    .then(() => console.log("✅ Shared"))
-                    .catch(err => console.warn("❌ Share failed:", err));
-            } else {
-                navigator.clipboard.writeText(msg)
-                    .then(() => alert("✅ Copied to clipboard"))
-                    .catch(() => alert("❌ Clipboard failed"));
-            }
-        });
-    }
-
-
     // --- Severe Weather Alerts ---
     function checkSevereWeather(desc) {
         const alertBox = document.getElementById("weatherAlert");
         if (!alertBox || !desc) return;
 
         const severe = ["storm", "extreme", "hurricane", "tornado", "heavy snow", "heatwave", "flood"];
-        const match = severe.find(word => desc.toLowerCase().includes(word));
+        const lower = desc.toLowerCase();
+        const match = severe.find(word => lower.includes(word));
         if (match) {
             alertBox.style.display = "block";
             alertBox.textContent = `⚠️ SEVERE WEATHER: ${match.toUpperCase()} detected. Stay safe!`;
             console.warn("🚨 Alert:", match);
+        } else {
+            alertBox.style.display = "none";
         }
     }
-    checkSevereWeather(conditionText);
+    checkSevereWeather(getConditionText());
 });
