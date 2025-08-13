@@ -26,6 +26,7 @@
 
 <input type="hidden" id="mapLat" value="@Model.Latitude" />
 <input type="hidden" id="mapLon" value="@Model.Longitude" />
+<input type="hidden" id="serverUnit" value="@Model.TempUnit" />
 
 <div class="main-content">
 
@@ -163,21 +164,25 @@
 <div class="row text-center mb-5 g-4">
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">UV Index</h6>
+            <h6 class="mb-2">☀️ UV Index</h6>
             <div class="uv-index">@Model.UVIndex</div>
         </div>
     </div>
 
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">Wind</h6>
-            <div class="wind-speed">@Model.CurrentWindSpeed km/h</div>
+            <h6 class="mb-2">💨 Wind Speed</h6>
+                <div id="windSpeedValue"
+                     data-kph="@Model.CurrentWindSpeed.ToString("0.#")"
+                     data-mph="@((Model.CurrentWindSpeed * 0.621371).ToString("0.#"))">
+                    @($"{(Model.TempUnit == "F" ? (Model.CurrentWindSpeed * 0.621371) : Model.CurrentWindSpeed):0.#} {(Model.TempUnit == "F" ? "mph" : "km/h")}")
+                </div>
+            </div>
         </div>
-    </div>
 
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">Humidity</h6>
+            <h6 class="mb-2">💧 Humidity</h6>
             <div>@Model.CurrentHumidity %</div>
         </div>
     </div>
@@ -187,7 +192,7 @@
 <div class="row text-center mb-5 g-4">
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">Dew Point</h6>
+            <h6 class="mb-2">🌡️ Dew Point</h6>
             <div id="dewPointValue"
                  data-c="@dewC.ToString("0.#")"
                  data-f="@dewF.ToString("0.#")">
@@ -198,7 +203,7 @@
 
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">Precipitation</h6>
+            <h6 class="mb-2">🌦️ Precipitation</h6>
             <div id="precipValue"
                  data-mm="@precipMm.ToString("0.##")"
                  data-in="@precipIn.ToString("0.##")">
@@ -209,7 +214,7 @@
 
     <div class="col-12 col-md-4">
         <div class="metric-card">
-            <h6 class="mb-2">Air Quality</h6>
+            <h6 class="mb-2">🌫️ Air Quality</h6>
             <div id="airQualityValue"
                  data-index="@Model.AirQuality.UsEpaIndex"
                  data-category="@Model.AirQuality.Category">
