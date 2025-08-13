@@ -1,3 +1,6 @@
+<img width="2435" height="1139" alt="Posnetek zaslona 2025-08-13 185341" src="https://github.com/user-attachments/assets/46398b21-26eb-40fd-b7c4-b11f581d7aa9" />
+<img width="2482" height="1248" alt="Posnetek zaslona 2025-08-13 185328" src="https://github.com/user-attachments/assets/e0d92e14-554e-42c5-b3b3-f4f974063c75" />
+<img width="2482" height="1242" alt="Posnetek zaslona 2025-08-13 185307" src="https://github.com/user-attachments/assets/98611237-3319-4bf2-9523-ac6a224bca54" />
 # Weather App
 A dynamic and modern weather app built using an API key from WeatherAPI and coded via Visual Studio 2022.
 
