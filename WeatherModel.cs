@@ -12,6 +12,7 @@ namespace MyWeatherApp_Deployed.Models
         public double CurrentTemperature { get; set; }
         public int CurrentHumidity { get; set; }
         public double CurrentWindSpeed { get; set; }
+        public double CurrentWindSpeedMph => CurrentWindSpeed * 0.621371;
         public double FeelsLikeTemperature { get; set; }
         public double CurrentPrecipitation { get; set; }
         public double DewPointTemperature { get; set; }
@@ -33,7 +34,7 @@ namespace MyWeatherApp_Deployed.Models
         public string CurrentTemp => $"{CurrentTemperature:0.#}";
         public string DewPoint => $"{DewPointTemperature:0.#}";
         public string PrecipUnit => TempUnit == "F" ? "in" : "mm";
-        public string WindUnit => "kph";
+        public string WindUnit => TempUnit == "F" ? "mph" : "km/h";
         public string TempUnitSymbol => TempUnit == "F" ? "°F" : "°C";
         public string PrecipNow => $"{CurrentPrecipitation:0.##} {PrecipUnit}";
 
