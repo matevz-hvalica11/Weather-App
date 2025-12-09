@@ -33,4 +33,4 @@ Weather Icons → Erik Flowers
 Map Framework → Leaflet.js
 
 🔄 Status
-I’m constantly refining the UI and adding new features — feedback and suggestions welcome.
+The website is now undergoing heavy maintenance since I am refining and rebuilding it from the ground up, I apologize if the site is now unavailable. It will be back online soon.
